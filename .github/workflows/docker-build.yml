@@ -38,3 +38,5 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/runpod-juggernaut-llama3:latest
+          build-args: |
+            CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
