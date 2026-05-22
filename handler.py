@@ -25,13 +25,14 @@ print("ComfyUI is ready!")
 
 LLM_PATH = "/comfyui/models/llm/llama-3-8b-instruct.Q4_K_M.gguf"
 
+# Load LLM globally at startup to keep it warm in VRAM
+print("Loading LLM into VRAM globally...")
+from llama_cpp import Llama
+llm = Llama(model_path=LLM_PATH, n_gpu_layers=-1, verbose=False)
+print("LLM successfully preloaded and ready!")
+
 def fuse_prompt_with_llm(raw_prompt, art_style):
-    print("Loading LLM into VRAM...")
-    # Import locally to avoid issues
-    from llama_cpp import Llama
-    # Load with full GPU acceleration
-    llm = Llama(model_path=LLM_PATH, n_gpu_layers=-1, verbose=False)
-    
+    print("Using pre-loaded LLM for instant prompt fusion...")
     system_prompt = "You are an expert AI image prompt engineer. Combine the user's base prompt and the requested art style into a single, cohesive, highly-detailed comma-separated prompt for Stable Diffusion. Do not include introductory text, conversational text, or prefixes. Output ONLY the final prompt."
     user_prompt = f"Base Prompt: {raw_prompt}\nStyle: {art_style}"
     
@@ -42,13 +43,8 @@ def fuse_prompt_with_llm(raw_prompt, art_style):
     fused = response['choices'][0]['text'].strip()
     
     print(f"Fused prompt: {fused}")
-    
-    # CRITICAL: Unload LLM to free VRAM for Juggernaut XL
-    print("Unloading LLM from VRAM to prevent Out-Of-Memory errors...")
-    del llm
-    gc.collect()
-    
     return fused
+
 
 def wait_for_comfyui_image(prompt_id):
     while True:
@@ -98,11 +94,9 @@ def handler(job):
             if node["class_type"] == "KSampler":
                 node["inputs"]["seed"] = seed
             elif node["class_type"] == "CLIPTextEncode":
-                # Check meta title or just assume it's the positive prompt if we haven't found it
                 if "_meta" in node and "Positive" in node.get("_meta", {}).get("title", ""):
                     node["inputs"]["text"] = fused_prompt
                 elif "text" in node["inputs"] and "negative" not in str(node).lower():
-                    # Fallback if _meta is missing
                     node["inputs"]["text"] = fused_prompt
 
         # 4. Queue prompt to ComfyUI
