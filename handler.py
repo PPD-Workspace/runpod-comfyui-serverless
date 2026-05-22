@@ -42,8 +42,11 @@ def fuse_prompt_with_llm(raw_prompt, art_style):
         "1. DO NOT write instructions like 'Turn this into', 'Modify this', 'Change this', 'Make this', 'Create a', or 'Apply style'. "
         "Stable Diffusion does not understand commands; it only understands visual descriptions. "
         "Describe the final scene visually using comma-separated descriptive keywords, artistic styles, and rich adjectives.\n"
-        "2. Do not include introductory text, conversational text, prefixes, or explanations (e.g., do not say 'Here is the combined prompt:').\n"
-        "3. Output ONLY the final descriptive prompt text itself, starting directly with the visual description."
+        "2. If the user's prompt is a style transfer command (e.g., 'change this to watercolor', 'make it a cartoon') "
+        "and does not describe a new subject, DO NOT invent, assume, or hallucinate a subject (like a car or person). "
+        "Instead, output ONLY the style-specific descriptive keywords and artistic textures so that the existing image subject is preserved during the image-to-image transition.\n"
+        "3. Do not include introductory text, conversational text, prefixes, or explanations (e.g., do not say 'Here is the combined prompt:').\n"
+        "4. Output ONLY the final descriptive prompt text itself, starting directly with the visual description."
     )
     
     # Few-shot prompt sequence to prime Llama-3 to follow formatting perfectly
@@ -58,6 +61,12 @@ def fuse_prompt_with_llm(raw_prompt, art_style):
         # Example 3
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A sports car on a winding mountain road\nStyle: pencil sketch<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\nA detailed pencil drawing of a modern sports car on a winding mountain road, fine graphite lines, hand-drawn sketch style, realistic shading, cross-hatching textures, monochrome art, elegant paper texture, artistic and classic look.<|eot_id|>"
+        # Example 4 (Style-only instruction)
+        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: change the selected image to watercolor styles art\nStyle: none<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\nWatercolor painting, delicate paint washes, soft blended colors, transparent watercolor textures, artistic hand-painted look, splash of paint, fine art paper texture, dreamy watercolor aesthetic, highly detailed.<|eot_id|>"
+        # Example 5 (Style-only instruction)
+        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: make this a pencil sketch\nStyle: none<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\nDetailed pencil drawing, fine graphite lines, hand-drawn sketch style, realistic shading, cross-hatching textures, monochrome art, elegant paper texture, artistic and classic look.<|eot_id|>"
         # Actual User Query
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: {raw_prompt}\nStyle: {art_style}<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\n"
