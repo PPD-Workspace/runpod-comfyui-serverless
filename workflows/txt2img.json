@@ -11,7 +11,7 @@
       "positive": ["6", 0],
       "negative": ["7", 0],
       "latent_image": ["5", 0]
-    },
+    }, 
     "class_type": "KSampler"
   },
   "4": {
