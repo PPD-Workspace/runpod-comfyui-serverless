@@ -30,7 +30,7 @@ LLM_PATH = "/comfyui/models/llm/llama-3-8b-instruct.Q4_K_M.gguf"
 # Load LLM globally at startup to keep it warm in VRAM
 print("Loading LLM into VRAM globally...")
 from llama_cpp import Llama
-llm = Llama(model_path=LLM_PATH, n_gpu_layers=-1, verbose=False)
+llm = Llama(model_path=LLM_PATH, n_gpu_layers=-1, n_ctx=2048, verbose=False)
 print("LLM successfully preloaded and ready!")
 
 def fuse_prompt_with_llm(raw_prompt, art_style):
