@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y wget curl cmake build-essential \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Download Juggernaut XL v9 from HuggingFace (no API key required)
+# Download Juggernaut XL v9 from Civitai (API token passed as build arg)
+ARG CIVITAI_TOKEN
 RUN wget --no-verbose -O /comfyui/models/checkpoints/juggernautXL.safetensors \
-    "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/Juggernaut-XL-v9-RunDiffusionPhoto-v2.safetensors"
+    "https://civitai.com/api/download/models/1759168?fileId=1659952&token=${CIVITAI_TOKEN}"
 
 # Download Llama 3 8B Quantized GGUF (smaller Q4 quantization to save space)
 RUN mkdir -p /comfyui/models/llm && \
