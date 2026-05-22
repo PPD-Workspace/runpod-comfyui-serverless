@@ -40,3 +40,5 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/runpod-juggernaut-llama3:latest
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
