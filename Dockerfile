@@ -20,10 +20,9 @@ RUN mkdir -p /comfyui/models/llm && \
     wget --no-verbose -O /comfyui/models/llm/llama-3-8b-instruct.Q4_K_M.gguf \
     "https://huggingface.co/bartowski/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf"
 
-# Install python dependencies for our custom LLM routing (compiled with CUDA GPU support)
-ENV FORCE_CMAKE=1
-ENV CMAKE_ARGS="-DLLAMA_CUDA=on"
-RUN pip install --no-cache-dir llama-cpp-python requests pydantic
+# Install python dependencies for our custom LLM routing (using pre-compiled CUDA 12.x wheel for speed and reliability)
+RUN pip install --no-cache-dir llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+RUN pip install --no-cache-dir requests pydantic
 
 # Copy our custom workflows and handler
 COPY workflows /workflows
