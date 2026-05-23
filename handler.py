@@ -42,31 +42,31 @@ def fuse_prompt_with_llm(raw_prompt, art_style):
         "1. DO NOT write instructions like 'Turn this into', 'Modify this', 'Change this', 'Make this', 'Create a', or 'Apply style'. "
         "Stable Diffusion does not understand commands; it only understands visual descriptions. "
         "Describe the final scene visually using comma-separated descriptive keywords, artistic styles, and rich adjectives.\n"
-        "2. If the user's prompt is a style transfer command (e.g., 'change this to watercolor', 'make it a cartoon') "
-        "and does not describe a new subject, DO NOT invent, assume, or hallucinate a subject (like a car or person). "
-        "Instead, output ONLY the style-specific descriptive keywords and artistic textures so that the existing image subject is preserved during the image-to-image transition.\n"
-        "3. Do not include introductory text, conversational text, prefixes, or explanations (e.g., do not say 'Here is the combined prompt:').\n"
-        "4. Output ONLY the final descriptive prompt text itself, starting directly with the visual description."
+        "2. PRESERVE THE SUBJECT: If the user's prompt describes a subject (e.g., a person, samurai, animal, car, or building), you MUST preserve and expand that subject in the final output! Describe the subject and action in rich detail.\n"
+        "3. STYLE-ONLY TRANSITIONS: If and only if the user's prompt is strictly a style-change command (e.g., 'change this to watercolor', 'make it a cartoon') "
+        "and does not describe a new subject, output ONLY the style-specific descriptive keywords and textures so that the existing image subject is preserved during image-to-image.\n"
+        "4. Do not include introductory text, conversational text, prefixes, or explanations (e.g., do not say 'Here is the combined prompt:').\n"
+        "5. Output ONLY the final descriptive prompt text itself, starting directly with the visual description."
     )
     
-    # Few-shot prompt sequence to prime Llama-3 to follow formatting perfectly
+    # Balanced Few-shot prompt sequence to teach the model to distinguish subject-based vs style-only prompts
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt}<|eot_id|>"
-        # Example 1
+        # Example 1: Subject + Style
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A futuristic cityscape of sleek skyscrapers and neon-lit buildings\nStyle: cartoon<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\nA futuristic cityscape of sleek skyscrapers and neon-lit buildings floating amidst a sea of clouds, vibrant colors, whimsical cartoon style, smooth cell shading, 2D vector art, highly detailed textures, playful perspective, high contrast, clean lines, professional digital artwork.<|eot_id|>"
-        # Example 2
-        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A cute cat sitting on a comfy chair\nStyle: realistic<|eot_id|>"
-        f"<|start_header_id|>assistant<|end_header_id|>\n\nA highly detailed and realistic cute domestic cat sitting on a plush comfy velvet armchair, photorealistic rendering, soft cinematic lighting, intricate fur texture, 8k resolution, crisp focus, lifelike eyes, cozy interior setting, premium quality photograph.<|eot_id|>"
-        # Example 3
-        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A sports car on a winding mountain road\nStyle: pencil sketch<|eot_id|>"
-        f"<|start_header_id|>assistant<|end_header_id|>\n\nA detailed pencil drawing of a modern sports car on a winding mountain road, fine graphite lines, hand-drawn sketch style, realistic shading, cross-hatching textures, monochrome art, elegant paper texture, artistic and classic look.<|eot_id|>"
-        # Example 4 (Style-only instruction)
+        # Example 2: Style-Only (No Subject)
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: change the selected image to watercolor styles art\nStyle: none<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\nWatercolor painting, delicate paint washes, soft blended colors, transparent watercolor textures, artistic hand-painted look, splash of paint, fine art paper texture, dreamy watercolor aesthetic, highly detailed.<|eot_id|>"
-        # Example 5 (Style-only instruction)
+        # Example 3: Subject + Style
+        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A cute cat sitting on a comfy chair\nStyle: realistic<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\nA highly detailed and realistic cute domestic cat sitting on a plush comfy velvet armchair, photorealistic rendering, soft cinematic lighting, intricate fur texture, 8k resolution, crisp focus, lifelike eyes, cozy interior setting, premium quality photograph.<|eot_id|>"
+        # Example 4: Style-Only (No Subject)
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: make this a pencil sketch\nStyle: none<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\nDetailed pencil drawing, fine graphite lines, hand-drawn sketch style, realistic shading, cross-hatching textures, monochrome art, elegant paper texture, artistic and classic look.<|eot_id|>"
+        # Example 5: Subject + Style (Specifically Watercolor to show it doesn't strip subjects)
+        f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: A fierce samurai warrior fighting a cyber-dragon\nStyle: watercolor<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\nA detailed watercolor painting of a fierce samurai warrior in ornate traditional armor fighting a massive cyber-dragon with glowing neon circuitry, soft blended paint washes, transparent watercolor textures, delicate paint splashes, dreamy aesthetic, highly detailed, high-contrast masterpiece.<|eot_id|>"
         # Actual User Query
         f"<|start_header_id|>user<|end_header_id|>\n\nBase Prompt: {raw_prompt}\nStyle: {art_style}<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n\n"
